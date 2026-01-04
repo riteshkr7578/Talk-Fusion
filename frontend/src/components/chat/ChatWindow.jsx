@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
@@ -15,20 +15,24 @@ export default function ChatWindow({
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const activeChat = chats.find(
-    (c) => String(c._id || c.id) === String(activeChatId)
+  const activeChat = useMemo(
+    () =>
+      chats.find(
+        (c) => String(c._id || c.id) === String(activeChatId)
+      ),
+    [chats, activeChatId]
   );
 
-  const messages = activeChat ? activeChat.messages : [];
+  const messages = activeChat?.messages ?? [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, activeChatId]);
+  }, [messages]);
 
   const updateChatMessages = (newMessage) => {
     setChats((prev) =>
       prev.map((chat) =>
-        (chat._id || chat.id) === activeChatId
+        String(chat._id || chat.id) === String(activeChatId)
           ? {
               ...chat,
               title:
@@ -42,95 +46,65 @@ export default function ChatWindow({
     );
   };
 
- const sendMessage = async (input) => {
-  if (!input.trim() || !activeChatId) return;
+  const sendMessage = async (input) => {
+    if (!input.trim() || !activeChatId) return;
 
-  updateChatMessages({ sender: "user", text: input });
-  setLoading(true);
+    updateChatMessages({ sender: "user", text: input });
+    setLoading(true);
 
-  let botReply = "";
-
-  /* =======================
-     1️⃣ AI REQUEST (CRITICAL)
-     ======================= */
-  try {
-    const history = messages.map((msg) => ({
-      role: msg.sender === "user" ? "user" : "assistant",
-      content: msg.text,
-    }));
-
-    const res = await axios.post(`${API_URL}/chat`, {
-      message: input,
-      history,
-    });
-
-    botReply = res.data.reply;
-
-    updateChatMessages({ sender: "bot", text: botReply });
-  } catch (err) {
-    updateChatMessages({
-      sender: "bot",
-      text: "⚠️ AI service failed. Try again.",
-    });
-    setLoading(false);
-    return; // ⛔ STOP here
-  }
-
-  setLoading(false);
-
-  /* =========================
-     2️⃣ DB SAVE (NON-BLOCKING)
-     ========================= */
-  if (isLoggedIn && activeChat?._id) {
     try {
-      const token = localStorage.getItem("token");
+      const history = messages.map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text,
+      }));
 
-      await axios.post(
-        `${API_URL}/chats/${activeChat._id}/message`,
-        { sender: "user", text: input },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await axios.post(`${API_URL}/chat`, {
+        message: input,
+        history,
+      });
 
-      await axios.post(
-        `${API_URL}/chats/${activeChat._id}/message`,
-        { sender: "bot", text: botReply },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-    } catch (dbErr) {
-      console.warn("⚠️ Chat saved locally but DB sync failed");
-      // ❌ DO NOT show error to user
+      updateChatMessages({ sender: "bot", text: res.data.reply });
+    } catch {
+      updateChatMessages({
+        sender: "bot",
+        text: "⚠️ AI service failed. Try again.",
+      });
     }
-  }
-};
 
-
-  if (!activeChatId) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
-        <p className="text-3xl md:text-4xl font-semibold">
-          How can I help you?
-        </p>
-      </div>
-    );
-  }
+    setLoading(false);
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
+      {/* CONTENT AREA */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg, idx) => (
-          <MessageBubble key={idx} msg={msg} />
-        ))}
-
-        {loading && (
-          <div className="bg-gray-700 p-3 rounded-xl w-fit mr-auto animate-pulse">
-            Fusion is thinking...
+        {messages.length === 0 && !loading ? (
+          <div className="h-full flex items-center justify-center">
+            <p className="text-3xl md:text-4xl font-semibold text-gray-400 text-center">
+              How can I help you?
+            </p>
           </div>
-        )}
+        ) : (
+          <>
+            {messages.map((msg, idx) => (
+              <MessageBubble key={idx} msg={msg} />
+            ))}
 
-        <div ref={messagesEndRef} />
+            {loading && (
+              <div className="bg-gray-700 p-3 rounded-xl w-fit mr-auto animate-pulse">
+                Fusion is thinking...
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
-      <ChatInput onSend={sendMessage} />
+      {/* INPUT AREA (ALWAYS FIXED) */}
+      <div className="p-4 border-t border-gray-800 bg-gray-900">
+        <ChatInput onSend={sendMessage} />
+      </div>
     </div>
   );
 }
