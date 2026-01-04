@@ -7,6 +7,7 @@ import Groq from "groq-sdk";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import authMiddleware from "./middleware/authMiddleware.js";
+import chatRoutes from "./routes/chatRoutes.js";
 
 connectDB();
 
@@ -30,6 +31,8 @@ const client = new Groq({
 });
 
 app.use("/auth", authRoutes);
+app.use("/api/chats", chatRoutes);
+
 
 app.post("/chat", async (req, res) => {
   try {

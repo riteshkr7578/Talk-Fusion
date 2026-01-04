@@ -1,7 +1,22 @@
-export default function Header({ isLoggedIn, onLogin, onSignup, onLogout }) {
+export default function Header({
+  isLoggedIn,
+  onLogin,
+  onSignup,
+  onLogout,
+  onMenuClick,
+}) {
   return (
     <header className="p-4 bg-gray-800 flex justify-between items-center">
-      <h1 className="text-lg font-semibold">TalkFusion 🤖</h1>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuClick}
+          className="md:hidden text-xl text-gray-300 hover:text-white"
+        >
+          ☰
+        </button>
+
+        <h1 className="text-lg font-semibold">TalkFusion 🤖</h1>
+      </div>
 
       {!isLoggedIn ? (
         <div className="space-x-2">

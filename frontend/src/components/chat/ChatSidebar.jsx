@@ -3,41 +3,59 @@ export default function ChatSidebar({
   activeChatId,
   onSelectChat,
   onNewChat,
+  isOpen,
+  onClose,
 }) {
+  const handleNewChat = async () => {
+    const id = await onNewChat();
+    if (id) onSelectChat(id);
+  };
+
   return (
-    <aside className="hidden md:flex w-64 bg-gray-800 border-r border-gray-700 flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-700">
-        <button
-          onClick={onNewChat}
-          className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded text-sm font-medium"
-        >
-          + New Chat
-        </button>
-      </div>
+    <>
+      {isOpen && (
+        <div
+          onClick={onClose}
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        />
+      )}
 
-      {/* Chat History */}
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {chats.length === 0 && (
-          <p className="text-gray-400 text-sm text-center mt-4">
-            No chats yet
-          </p>
-        )}
-
-        {chats.map((chat) => (
+      <aside
+        className={`fixed md:static z-50 md:z-auto
+        top-0 left-0 h-full w-64 bg-gray-900 border-r border-gray-800
+        transform transition-transform duration-300
+        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        md:translate-x-0 flex flex-col`}
+      >
+        <div className="p-4 border-b border-gray-800">
           <button
-            key={chat.id}
-            onClick={() => onSelectChat(chat.id)}
-            className={`w-full text-left px-3 py-2 rounded text-sm truncate ${
-              activeChatId === chat.id
-                ? "bg-gray-700 text-white"
-                : "text-gray-300 hover:bg-gray-700"
-            }`}
+            onClick={handleNewChat}
+            className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-semibold"
           >
-            {chat.title}
+            + New Chat
           </button>
-        ))}
-      </div>
-    </aside>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
+          {chats.map((chat) => {
+            const id = chat._id || chat.id;
+
+            return (
+              <button
+                key={id}
+                onClick={() => onSelectChat(id)}
+                className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate ${
+                  String(id) === String(activeChatId)
+                    ? "bg-gray-800 text-white"
+                    : "text-gray-300 hover:bg-gray-800"
+                }`}
+              >
+                {chat.title || "New Chat"}
+              </button>
+            );
+          })}
+        </div>
+      </aside>
+    </>
   );
 }
