@@ -2,28 +2,31 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Groq from "groq-sdk";
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
+import authMiddleware from "./middleware/authMiddleware.js";
+
 
 dotenv.config();
+connectDB();
 
 const app = express();
 const PORT = 8000;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Groq client
 const client = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-// POST /chat
-app.post("/chat", async (req, res) => {
+app.use("/auth", authRoutes);
+
+app.post("/chat",authMiddleware, async (req, res) => {
   try {
     const { message, history = [] } = req.body;
     const userMessage = message.toLowerCase();
 
-    // Detect programming-related queries
     const isCodeQuestion = [
       "code", "program", "wap", "python", "java",
       "c++", "function", "algorithm", "script"
