@@ -1,36 +1,40 @@
-# 🤖 Full stack AI chat app
+# 🤖 Talk Fusion — Full-Stack AI Chat Application
 
-A modern **AI-powered chat frontend** built with **React**, designed to work seamlessly with a Groq-powered backend.  
-The application supports **context-aware conversations**, **Markdown rendering**, and **clean UI interactions**.
+**Talk Fusion** is a modern **full-stack AI chat application** built with **React (frontend)** and **Express.js (backend)**, powered by **Groq’s LLaMA 3.1** model.
+It supports **context-aware conversations**, **Markdown-formatted responses**, and a **clean, responsive UI**.
 
 ---
 
 ## 🚀 Features
 
-- 💬 **Real-time AI Chat Interface**
-- 🧠 **Conversation Memory Support** (multi-turn context)
-- ✍️ **Markdown Rendering** (code blocks, headings, lists)
-- ⚡ **Fast & Responsive UI**
-- 🔗 **Backend-agnostic** (works with Express/FastAPI)
-- 🌐 **CORS-friendly API integration**
+* 💬 **Real-time AI Chat Interface**
+* 🧠 **Conversation Memory (Multi-turn Context)**
+* ✍️ **Markdown Rendering** (headings, lists, code blocks)
+* ⚡ **Fast & Responsive UI**
+* 🔗 **REST-based Frontend–Backend Integration**
+* 🌐 **CORS-enabled Express Backend**
+* 🧩 **Intent-based Prompt Handling** (code vs explanation)
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Frontend**
-- React
-- JavaScript (ES6+)
-- CSS / Tailwind CSS 
-- React Hooks (`useState`, `useEffect`)
-- Axios for API calls
+### Frontend
 
-**Backend (Connected)**
-- Express.js
-- Groq LLM API (LLaMA 3.1)
-- REST API
+* React
+* JavaScript (ES6+)
+* CSS / Tailwind CSS
+* React Hooks (`useState`, `useEffect`)
+* Axios (API communication)
 
+### Backend
 
+* Node.js
+* Express.js
+* Groq SDK (LLaMA 3.1)
+* REST API
+* dotenv (environment variables)
+* CORS middleware
 
 ---
 
@@ -39,6 +43,7 @@ The application supports **context-aware conversations**, **Markdown rendering**
 ### POST `/chat`
 
 **Request Body**
+
 ```json
 {
   "message": "Your message here",
@@ -50,6 +55,7 @@ The application supports **context-aware conversations**, **Markdown rendering**
 ```
 
 **Response**
+
 ```json
 {
   "reply": "AI-generated response"
@@ -60,87 +66,121 @@ The application supports **context-aware conversations**, **Markdown rendering**
 
 ## 🧠 How Conversation Memory Works
 
-- The frontend **stores the full chat history**
-- Every new request sends:
-  - Current user message
-  - Previous messages (`history`)
-- Backend injects history into the LLM prompt
-- Enables **context-aware AI responses**
+* The **frontend maintains full chat history**
+* Each request sends:
 
-✔ Stateless backend  
-✔ Scalable architecture  
+  * Current user message
+  * Previous messages (`history`)
+* The backend injects history into the LLM prompt
+* Enables **context-aware, multi-turn conversations**
+
+✔ Stateless backend
+✔ Scalable & cloud-friendly design
 
 ---
 
-## 🖥️ Getting Started
+## 🖥️ Getting Started (Local Setup)
 
 ### 1️⃣ Clone the Repository
+
 ```bash
-git clone https://github.com/your-username/your-frontend-repo.git
-cd your-frontend-repo
+git clone https://github.com/riteshkr7578/Talk-Fusion.git
+cd Talk-Fusion
 ```
 
-### 2️⃣ Install Dependencies
+---
+
+### 2️⃣ Backend Setup
+
 ```bash
+cd backend
 npm install
 ```
 
-### 3️⃣ Configure Backend URL
-Update API endpoint inside your chat service or component:
-```js
-const API_URL = "http://localhost:8000/chat";
+Create a `.env` file:
+
+```
+GROQ_API_KEY=your_groq_api_key
 ```
 
-### 4️⃣ Start Development Server
+Start backend server:
+
 ```bash
+npm start
+```
+
+Backend runs on:
+
+```
+http://localhost:8000
+```
+
+---
+
+### 3️⃣ Frontend Setup
+
+```bash
+cd ../frontend
+npm install
 npm run dev
+```
+
+---
+
+### 4️⃣ Configure Backend URL (Frontend)
+
+```js
+const API_URL = "http://localhost:8000/chat";
 ```
 
 ---
 
 ## 📸 UI Highlights
 
-- Clean chat bubbles for **user & assistant**
-- Markdown-supported AI responses
-- Smooth scrolling and input handling
-- Minimal, distraction-free design
+* Clean chat bubbles for **User & AI**
+* Markdown-formatted AI responses
+* Smooth scrolling and input handling
+* Minimal, distraction-free interface
+
+---
+
+## 🚀 Deployment
+
+* **Backend**: Render (Express.js)
+* **Frontend**: Vercel / Netlify
+* Environment variables handled securely via platform settings
 
 ---
 
 ## 📈 Future Enhancements
 
-- 🔐 User authentication (JWT)
-- 📜 Chat history persistence
-- ⏳ Streaming responses (typing effect)
-- 🎨 Theme switch (dark/light)
-- 📱 Mobile-first UI improvements
+* 🔐 JWT-based user authentication
+* 💾 Persistent chat history
+* ⏳ Streaming responses (typing effect)
+* 🎨 Dark / Light mode
+* 📱 Enhanced mobile responsiveness
 
 ---
 
 ## 🧑‍💻 Author
 
-**Ritesh Kumar**  
-Frontend / Full Stack Developer  
-Passionate about building scalable web & AI-powered applications.
+**Ritesh Kumar**
+Frontend / Full-Stack Developer
+
+Passionate about building scalable web applications and AI-powered systems.
 
 ---
 
 ## ⭐ Why This Project Matters
 
 This project demonstrates:
-- Modern React architecture
-- AI + frontend integration
-- Prompt engineering awareness
-- Real-world full-stack design thinking
 
-Perfect for **frontend**, **full-stack**, and **AI-integrated web** roles.
+* Modern React architecture
+* Clean Express.js backend design
+* AI integration using LLM APIs
+* Prompt engineering awareness
+* Real-world full-stack system design
+
+Ideal for **Frontend**, **Full-Stack**, and **AI-Integrated Web Developer** roles.
 
 ---
-
-If you want, I can also:
-- ✨ Customize README for **resume screening**
-- 📄 Write **project explanation for interviews**
-- 🎥 Create a **video walkthrough script**
-- 🧾 Generate **resume bullet points**
-
-Just tell me 👌
