@@ -34,7 +34,7 @@ export default function App() {
 
     try {
       const res = await axios.post(
-        "http://localhost:8000/chat",
+        "https://talk-fusion.onrender.com/chat",
         { message: input }
       );
 
