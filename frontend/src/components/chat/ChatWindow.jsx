@@ -3,7 +3,8 @@ import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://talk-fusion.onrender.com";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://talk-fusion.onrender.com";
 
 export default function ChatWindow({
   isLoggedIn,
@@ -14,12 +15,11 @@ export default function ChatWindow({
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-const activeChat = chats.find(
-  (c) => String(c._id || c.id) === String(activeChatId)
-);
+  const activeChat = chats.find(
+    (c) => String(c._id || c.id) === String(activeChatId)
+  );
 
-const messages = activeChat ? activeChat.messages : [];
-
+  const messages = activeChat ? activeChat.messages : [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,47 +42,67 @@ const messages = activeChat ? activeChat.messages : [];
     );
   };
 
-  const sendMessage = async (input) => {
-    if (!input.trim() || !activeChatId) return;
+ const sendMessage = async (input) => {
+  if (!input.trim() || !activeChatId) return;
 
-    updateChatMessages({ sender: "user", text: input });
-    setLoading(true);
+  updateChatMessages({ sender: "user", text: input });
+  setLoading(true);
 
-    let botReply = "";
+  let botReply = "";
 
-    try {
-      const res = await axios.post(`${API_URL}/chat`, { message: input });
-      botReply = res.data.reply;
-      updateChatMessages({ sender: "bot", text: botReply });
-    } catch {
-      updateChatMessages({
-        sender: "bot",
-        text: "⚠️ AI service failed. Try again.",
-      });
-      setLoading(false);
-      return;
-    }
+  /* =======================
+     1️⃣ AI REQUEST (CRITICAL)
+     ======================= */
+  try {
+    const history = messages.map((msg) => ({
+      role: msg.sender === "user" ? "user" : "assistant",
+      content: msg.text,
+    }));
 
+    const res = await axios.post(`${API_URL}/chat`, {
+      message: input,
+      history,
+    });
+
+    botReply = res.data.reply;
+
+    updateChatMessages({ sender: "bot", text: botReply });
+  } catch (err) {
+    updateChatMessages({
+      sender: "bot",
+      text: "⚠️ AI service failed. Try again.",
+    });
     setLoading(false);
+    return; // ⛔ STOP here
+  }
 
-    if (isLoggedIn && activeChat?._id) {
-      try {
-        const token = localStorage.getItem("token");
+  setLoading(false);
 
-        await axios.post(
-          `${API_URL}/chats/${activeChat._id}/message`,
-          { sender: "user", text: input },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+  /* =========================
+     2️⃣ DB SAVE (NON-BLOCKING)
+     ========================= */
+  if (isLoggedIn && activeChat?._id) {
+    try {
+      const token = localStorage.getItem("token");
 
-        await axios.post(
-          `${API_URL}/chats/${activeChat._id}/message`,
-          { sender: "bot", text: botReply },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch {}
+      await axios.post(
+        `${API_URL}/chats/${activeChat._id}/message`,
+        { sender: "user", text: input },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await axios.post(
+        `${API_URL}/chats/${activeChat._id}/message`,
+        { sender: "bot", text: botReply },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch (dbErr) {
+      console.warn("⚠️ Chat saved locally but DB sync failed");
+      // ❌ DO NOT show error to user
     }
-  };
+  }
+};
+
 
   if (!activeChatId) {
     return (
