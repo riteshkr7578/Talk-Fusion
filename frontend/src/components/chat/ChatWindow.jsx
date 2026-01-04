@@ -3,7 +3,7 @@ import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+const API_URL = import.meta.env.VITE_API_URL || "https://talk-fusion.onrender.com";
 
 export default function ChatWindow({
   isLoggedIn,
