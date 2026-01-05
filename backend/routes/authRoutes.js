@@ -5,6 +5,11 @@ import User from "../models/User.js";
 
 const router = express.Router();
 
+router.get("/me", authMiddleware, (req, res) => {
+  res.json({ userId: req.userId });
+});
+
+
 /**
  * @route POST /auth/signup
  */

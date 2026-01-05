@@ -42,6 +42,21 @@ export default function App() {
       setActiveChatId(id);
       return id;
     }
+    
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  axios
+    .get(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then(() => setIsLoggedIn(true))
+    .catch(() => {
+      localStorage.removeItem("token");
+      setIsLoggedIn(false);
+    });
+}, []);
 
     const token = localStorage.getItem("token");
     const res = await axios.post(
