@@ -1,50 +1,51 @@
-# 🤖 Talk Fusion — Full-Stack AI Chat Application
+🤖 Talk Fusion — Full-Stack AI Chat Application
 
-**Talk Fusion** is a modern **full-stack AI chat application** built with **React (frontend)** and **Express.js (backend)**, powered by **Groq’s LLaMA 3.1** model.
-It supports **context-aware conversations**, **Markdown-formatted responses**, and a **clean, responsive UI**.
+Talk Fusion is a modern full-stack AI chat application built with React and Express.js, powered by Groq’s LLaMA 3.1 model.
+It delivers context-aware, multi-turn conversations, Markdown-formatted responses, and a responsive, production-grade UI inspired by real-world chat systems.
 
----
+⸻
 
-## 🚀 Features
+🚀 Features
+	•	💬 Real-Time AI Chat with low-latency responses
+	•	🧠 Conversation Memory for coherent multi-turn interactions
+	•	✍️ Markdown Rendering (headings, lists, code blocks)
+	•	⚡ Fast & Responsive UI (desktop + mobile)
+	•	🧩 Intent-Aware Prompt Handling (code vs explanation)
+	•	🔗 REST-based Frontend–Backend Architecture
+	•	🌐 CORS-enabled Express Backend
+	•	🗂️ Multiple Chat Sessions with sidebar navigation
 
-* 💬 **Real-time AI Chat Interface**
-* 🧠 **Conversation Memory (Multi-turn Context)**
-* ✍️ **Markdown Rendering** (headings, lists, code blocks)
-* ⚡ **Fast & Responsive UI**
-* 🔗 **REST-based Frontend–Backend Integration**
-* 🌐 **CORS-enabled Express Backend**
-* 🧩 **Intent-based Prompt Handling** (code vs explanation)
+⸻
 
----
+🛠️ Tech Stack
 
-## 🛠️ Tech Stack
+Frontend
+	•	React (Vite)
+	•	JavaScript (ES6+)
+	•	Tailwind CSS
+	•	React Hooks (useState, useEffect, useMemo)
+	•	Axios (API communication)
 
-### Frontend
+Backend
+	•	Node.js
+	•	Express.js
+	•	Groq SDK (LLaMA 3.1)
+	•	RESTful APIs
+	•	dotenv (environment configuration)
+	•	CORS middleware
 
-* React
-* JavaScript (ES6+)
-* CSS / Tailwind CSS
-* React Hooks (`useState`, `useEffect`)
-* Axios (API communication)
+Deployment
+	•	Backend: Render
+	•	Frontend: Vercel / Netlify
 
-### Backend
+⸻
 
-* Node.js
-* Express.js
-* Groq SDK (LLaMA 3.1)
-* REST API
-* dotenv (environment variables)
-* CORS middleware
+🔗 API Overview
 
----
+POST /chat
 
-## 🔗 Backend API Contract
+Request
 
-### POST `/chat`
-
-**Request Body**
-
-```json
 {
   "message": "Your message here",
   "history": [
@@ -52,135 +53,118 @@ It supports **context-aware conversations**, **Markdown-formatted responses**, a
     { "role": "assistant", "content": "Hi!" }
   ]
 }
-```
 
-**Response**
+Response
 
-```json
 {
   "reply": "AI-generated response"
 }
-```
 
----
 
-## 🧠 How Conversation Memory Works
+⸻
 
-* The **frontend maintains full chat history**
-* Each request sends:
+🧠 Conversation Memory Design
+	•	The frontend maintains chat history
+	•	Each request sends:
+	•	Current user input
+	•	Previous conversation messages
+	•	The backend injects this history into the LLM prompt
+	•	Enables context-aware, multi-turn conversations
 
-  * Current user message
-  * Previous messages (`history`)
-* The backend injects history into the LLM prompt
-* Enables **context-aware, multi-turn conversations**
+Design Benefits
+	•	Stateless backend
+	•	Scalable and cloud-friendly
+	•	Easy to extend with persistence or streaming
 
-✔ Stateless backend
-✔ Scalable & cloud-friendly design
+⸻
 
----
+🖥️ Local Setup
 
-## 🖥️ Getting Started (Local Setup)
+1️⃣ Clone Repository
 
-### 1️⃣ Clone the Repository
-
-```bash
 git clone https://github.com/riteshkr7578/Talk-Fusion.git
 cd Talk-Fusion
-```
 
----
 
-### 2️⃣ Backend Setup
+⸻
 
-```bash
+2️⃣ Backend Setup
+
 cd backend
 npm install
-```
 
-Create a `.env` file:
+Create .env:
 
-```
 GROQ_API_KEY=your_groq_api_key
-```
 
-Start backend server:
+Start server:
 
-```bash
 npm start
-```
 
-Backend runs on:
+Backend runs at:
 
-```
 http://localhost:8000
-```
 
----
 
-### 3️⃣ Frontend Setup
+⸻
 
-```bash
+3️⃣ Frontend Setup
+
 cd ../frontend
 npm install
 npm run dev
-```
 
----
 
-### 4️⃣ Configure Backend URL (Frontend)
+⸻
 
-```js
-const API_URL = "http://localhost:8000/chat";
-```
+4️⃣ Environment Configuration (Frontend)
 
----
+const API_URL = "http://localhost:8000";
 
-## 📸 UI Highlights
 
-* Clean chat bubbles for **User & AI**
-* Markdown-formatted AI responses
-* Smooth scrolling and input handling
-* Minimal, distraction-free interface
+⸻
 
----
+📸 UI Highlights
+	•	Clean chat bubbles for user and AI
+	•	Markdown-formatted AI responses
+	•	Smooth auto-scrolling and input handling
+	•	Sidebar-based multi-chat navigation
+	•	Minimal, distraction-free design
 
-## 🚀 Deployment
+⸻
 
-* **Backend**: Render (Express.js)
-* **Frontend**: Vercel / Netlify
-* Environment variables handled securely via platform settings
+🚀 Deployment Notes
+	•	Backend deployed on Render
+	•	Frontend deployed on Vercel / Netlify
+	•	Environment variables managed via platform settings
+	•	Production-ready CORS and API configuration
 
----
+⸻
 
-## 📈 Future Enhancements
+📈 Planned Enhancements
+	•	🔐 JWT-based authentication
+	•	💾 Persistent chat storage
+	•	⏳ Streaming AI responses (typing effect)
+	•	🎨 Theme toggle (dark / light)
+	•	📱 Advanced mobile interactions
 
-* 🔐 JWT-based user authentication
-* 💾 Persistent chat history
-* ⏳ Streaming responses (typing effect)
-* 🎨 Dark / Light mode
-* 📱 Enhanced mobile responsiveness
+⸻
 
----
+🧑‍💻 Author
 
-## 🧑‍💻 Author
-
-**Ritesh Kumar**
+Ritesh Kumar
 Frontend / Full-Stack Developer
 
-Passionate about building scalable web applications and AI-powered systems.
+Passionate about building scalable web applications and AI-powered user experiences.
 
----
+⸻
 
-## ⭐ Why This Project Matters
+⭐ Why This Project Matters
 
-This project demonstrates:
+This project showcases:
+	•	Real-world React application architecture
+	•	Clean and scalable Express.js backend
+	•	Practical LLM integration
+	•	Prompt-engineering awareness
+	•	End-to-end full-stack system design
 
-* Modern React architecture
-* Clean Express.js backend design
-* AI integration using LLM APIs
-* Prompt engineering awareness
-* Real-world full-stack system design
-
-Ideal for **Frontend**, **Full-Stack**, and **AI-Integrated Web Developer** roles.
-
----
