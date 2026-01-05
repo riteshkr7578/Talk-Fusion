@@ -49,15 +49,12 @@ export default function ChatWindow({
 const sendMessage = async (input) => {
   if (!input.trim() || !activeChatId) return;
 
-  setChats((prev) =>
-    prev.map((chat) =>
-      String(chat._id || chat.id) === String(activeChatId)
-        ? { ...chat, messages: [...chat.messages, { sender: "user", text: input }] }
-        : chat
-    )
-  );
+  const wasEmpty = messages.length === 0;
 
+  updateChatMessages({ sender: "user", text: input });
   setLoading(true);
+
+  let botReply = "";
 
   try {
     const history = messages.map((m) => ({
@@ -70,25 +67,63 @@ const sendMessage = async (input) => {
       history,
     });
 
-    setChats((prev) =>
-      prev.map((chat) =>
-        String(chat._id || chat.id) === String(activeChatId)
-          ? { ...chat, messages: [...chat.messages, { sender: "bot", text: res.data.reply }] }
-          : chat
-      )
-    );
+    botReply = res.data.reply;
+    updateChatMessages({ sender: "bot", text: botReply });
   } catch {
-    setChats((prev) =>
-      prev.map((chat) =>
-        String(chat._id || chat.id) === String(activeChatId)
-          ? { ...chat, messages: [...chat.messages, { sender: "bot", text: "AI failed" }] }
-          : chat
-      )
-    );
+    updateChatMessages({
+      sender: "bot",
+      text: "⚠️ AI service failed. Try again.",
+    });
+    setLoading(false);
+    return;
   }
 
   setLoading(false);
+
+  // 🔐 Save to DB (logged-in only)
+  if (isLoggedIn && activeChat?._id) {
+    try {
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        `${API_URL}/api/chats/${activeChat._id}/message`,
+        { sender: "user", text: input },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await axios.post(
+        `${API_URL}/api/chats/${activeChat._id}/message`,
+        { sender: "bot", text: botReply },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+    } catch {
+      // silent fail (UI already updated)
+    }
+  }
+
+  // 🆕 Auto-create next chat ONLY AFTER first message-response
+  if (wasEmpty) {
+    if (isLoggedIn) {
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        `${API_URL}/api/chats`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setChats((prev) => [res.data, ...prev]);
+      setActiveChatId(res.data._id);
+    } else {
+      const id = crypto.randomUUID();
+      setChats((prev) => [
+        { id, title: "New Chat", messages: [] },
+        ...prev,
+      ]);
+      setActiveChatId(id);
+    }
+  }
 };
+
 
 
   return (
