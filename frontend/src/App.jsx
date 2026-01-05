@@ -12,25 +12,25 @@ import Footer from "./components/layout/Footer";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function App() {
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
 
-  // Check auth once on load
+  // 🔐 Check session once
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem("token"));
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
   }, []);
 
-  // Load chats ONLY after successful login
-  const handleLoginSuccess = async () => {
-    setIsLoggedIn(true);
-    setShowLogin(false);
+  // 📥 Load chats after login
+  useEffect(() => {
+    if (!isLoggedIn) return;
 
-    try {
+    const loadChats = async () => {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API_URL}/api/chats`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -38,23 +38,24 @@ export default function App() {
 
       setChats(res.data);
       setActiveChatId(res.data[0]?._id || null);
-    } catch {
-      setChats([]);
-      setActiveChatId(null);
-    }
-  };
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setIsLoggedIn(false);
-    setChats([]);
-    setActiveChatId(null);
-  };
+    loadChats();
+  }, [isLoggedIn]);
+
+  // 👤 Guest → ensure one chat
+  useEffect(() => {
+    if (!isLoggedIn && chats.length === 0) {
+      const id = crypto.randomUUID();
+      setChats([{ id, title: "New Chat", messages: [] }]);
+      setActiveChatId(id);
+    }
+  }, [isLoggedIn, chats.length]);
 
   const createNewChat = async () => {
     if (!isLoggedIn) {
       const id = crypto.randomUUID();
-      setChats((prev) => [{ id, title: "New Chat", messages: [] }, ...prev]);
+      setChats((p) => [{ id, title: "New Chat", messages: [] }, ...p]);
       setActiveChatId(id);
       return;
     }
@@ -66,33 +67,25 @@ export default function App() {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    setChats((prev) => [res.data, ...prev]);
+    setChats((p) => [res.data, ...p]);
     setActiveChatId(res.data._id);
   };
 
-  // Guest: ensure one chat exists
-  useEffect(() => {
-    if (!isLoggedIn && chats.length === 0) {
-      const id = crypto.randomUUID();
-      setChats([{ id, title: "New Chat", messages: [] }]);
-      setActiveChatId(id);
-    }
-  }, [isLoggedIn]);
+  const logout = () => {
+    localStorage.removeItem("token");
+    setIsLoggedIn(false);
+    setChats([]);
+    setActiveChatId(null);
+  };
 
   return (
-    <div className="w-full h-screen bg-gray-900 text-white flex flex-col">
+    <div className="h-screen flex flex-col bg-gray-900 text-white">
       <Header
         isLoggedIn={isLoggedIn}
         onMenuClick={() => setSidebarOpen(true)}
-        onLogin={() => {
-          setShowLogin(true);
-          setShowSignup(false);
-        }}
-        onSignup={() => {
-          setShowSignup(true);
-          setShowLogin(false);
-        }}
-        onLogout={handleLogout}
+        onLogin={() => setShowLogin(true)}
+        onSignup={() => setShowSignup(true)}
+        onLogout={logout}
       />
 
       <div className="flex flex-1 overflow-hidden">
@@ -120,15 +113,20 @@ export default function App() {
 
       <Footer />
 
-      {showLogin && (
-        <Modal onClose={() => setShowLogin(false)}>
-          <Login onSuccess={handleLoginSuccess} />
-        </Modal>
-      )}
+    {showLogin && (
+  <Modal onClose={() => setShowLogin(false)}>
+    <Login
+      onSuccess={() => {
+        setIsLoggedIn(true);
+        setShowLogin(false);
+      }}
+    />
+  </Modal>
+)}
 
       {showSignup && (
         <Modal onClose={() => setShowSignup(false)}>
-          <Signup onSuccess={() => setShowSignup(false)} />
+          <Signup />
         </Modal>
       )}
     </div>

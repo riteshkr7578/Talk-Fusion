@@ -46,33 +46,50 @@ export default function ChatWindow({
     );
   };
 
-  const sendMessage = async (input) => {
-    if (!input.trim() || !activeChatId) return;
+const sendMessage = async (input) => {
+  if (!input.trim() || !activeChatId) return;
 
-    updateChatMessages({ sender: "user", text: input });
-    setLoading(true);
+  setChats((prev) =>
+    prev.map((chat) =>
+      String(chat._id || chat.id) === String(activeChatId)
+        ? { ...chat, messages: [...chat.messages, { sender: "user", text: input }] }
+        : chat
+    )
+  );
 
-    try {
-      const history = messages.map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.text,
-      }));
+  setLoading(true);
 
-      const res = await axios.post(`${API_URL}/chat`, {
-        message: input,
-        history,
-      });
+  try {
+    const history = messages.map((m) => ({
+      role: m.sender === "user" ? "user" : "assistant",
+      content: m.text,
+    }));
 
-      updateChatMessages({ sender: "bot", text: res.data.reply });
-    } catch {
-      updateChatMessages({
-        sender: "bot",
-        text: "⚠️ AI service failed. Try again.",
-      });
-    }
+    const res = await axios.post(`${API_URL}/chat`, {
+      message: input,
+      history,
+    });
 
-    setLoading(false);
-  };
+    setChats((prev) =>
+      prev.map((chat) =>
+        String(chat._id || chat.id) === String(activeChatId)
+          ? { ...chat, messages: [...chat.messages, { sender: "bot", text: res.data.reply }] }
+          : chat
+      )
+    );
+  } catch {
+    setChats((prev) =>
+      prev.map((chat) =>
+        String(chat._id || chat.id) === String(activeChatId)
+          ? { ...chat, messages: [...chat.messages, { sender: "bot", text: "AI failed" }] }
+          : chat
+      )
+    );
+  }
+
+  setLoading(false);
+};
+
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
