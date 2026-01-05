@@ -104,7 +104,10 @@ export default function App() {
   onNewChat={createNewChat}
   setChats={setChats}
   isLoggedIn={isLoggedIn}
+  isOpen={sidebarOpen}
+  onClose={() => setSidebarOpen(false)}
 />
+
 
         <ChatWindow
           isLoggedIn={isLoggedIn}
