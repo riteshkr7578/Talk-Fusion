@@ -96,7 +96,7 @@ export default function ChatWindow({
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !loading ? (
           <div className="h-full flex items-center justify-center">
-            <p className="text-3xl md:text-6xl font-semibold text-gray-400 text-center">
+            <p className="text-3xl md:text-5xl font-semibold text-gray-400 text-center">
               How can I help you?
             </p>
           </div>
