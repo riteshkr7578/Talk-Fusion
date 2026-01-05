@@ -7,6 +7,8 @@ import ChatSidebar from "./components/chat/ChatSidebar";
 import Modal from "./components/common/Modal";
 import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
+import Footer from "./components/layout/Footer";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
@@ -42,7 +44,7 @@ export default function App() {
       setActiveChatId(id);
       return id;
     }
-    
+
 useEffect(() => {
   const token = localStorage.getItem("token");
   if (!token) return;
@@ -132,6 +134,7 @@ useEffect(() => {
         />
       </div>
 
+<Footer />
       {showLogin && (
         <Modal onClose={() => setShowLogin(false)}>
           <Login onSuccess={handleLoginSuccess} />
