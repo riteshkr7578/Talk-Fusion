@@ -4,17 +4,15 @@ import authMiddleware from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-/**
- * Get all chats for logged-in user
- */
+// Get all chats
 router.get("/", authMiddleware, async (req, res) => {
-  const chats = await Chat.find({ userId: req.userId }).sort({ updatedAt: -1 });
+  const chats = await Chat.find({ userId: req.userId }).sort({
+    updatedAt: -1,
+  });
   res.json(chats);
 });
 
-/**
- * Create new chat
- */
+// Create new chat
 router.post("/", authMiddleware, async (req, res) => {
   const chat = await Chat.create({
     userId: req.userId,
@@ -25,9 +23,7 @@ router.post("/", authMiddleware, async (req, res) => {
   res.json(chat);
 });
 
-/**
- * Append message to chat
- */
+// Append message
 router.post("/:chatId/message", authMiddleware, async (req, res) => {
   const { sender, text } = req.body;
 
@@ -40,6 +36,10 @@ router.post("/:chatId/message", authMiddleware, async (req, res) => {
     { new: true }
   );
 
+  if (!chat) {
+    return res.status(404).json({ message: "Chat not found" });
+  }
+
   res.json(chat);
 });
 
@@ -47,11 +47,19 @@ router.post("/:chatId/message", authMiddleware, async (req, res) => {
 router.patch("/:chatId", authMiddleware, async (req, res) => {
   const { title } = req.body;
 
+  if (!title || !title.trim()) {
+    return res.status(400).json({ message: "Title is required" });
+  }
+
   const chat = await Chat.findOneAndUpdate(
     { _id: req.params.chatId, userId: req.userId },
-    { title },
+    { title: title.trim() },
     { new: true }
   );
+
+  if (!chat) {
+    return res.status(404).json({ message: "Chat not found" });
+  }
 
   res.json(chat);
 });
@@ -59,13 +67,16 @@ router.patch("/:chatId", authMiddleware, async (req, res) => {
 
 // Delete chat
 router.delete("/:chatId", authMiddleware, async (req, res) => {
-  await Chat.findOneAndDelete({
+  const deleted = await Chat.findOneAndDelete({
     _id: req.params.chatId,
     userId: req.userId,
   });
 
+  if (!deleted) {
+    return res.status(404).json({ message: "Chat not found" });
+  }
+
   res.json({ success: true });
 });
-
 
 export default router;

@@ -1,61 +1,147 @@
+import { useState } from "react";
+import axios from "axios";
+
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://talk-fusion.onrender.com";
+
 export default function ChatSidebar({
   chats,
   activeChatId,
   onSelectChat,
   onNewChat,
-  isOpen,
-  onClose,
+  setChats,
+  isLoggedIn,
 }) {
-  const handleNewChat = async () => {
-    const id = await onNewChat();
-    if (id) onSelectChat(id);
+  const [editingId, setEditingId] = useState(null);
+  const [title, setTitle] = useState("");
+
+  const renameChat = async (chatId) => {
+    const newTitle = title.trim();
+    if (!newTitle) {
+      setEditingId(null);
+      return;
+    }
+
+    if (!isLoggedIn) {
+      setChats((prev) =>
+        prev.map((c) =>
+          String(c.id) === String(chatId)
+            ? { ...c, title: newTitle }
+            : c
+        )
+      );
+      setEditingId(null);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    const res = await axios.patch(
+      `${API_URL}/api/chats/${chatId}`,
+      { title: newTitle },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const updatedChat = res.data;
+
+    setChats((prev) =>
+      prev.map((c) =>
+        String(c._id) === String(updatedChat._id)
+          ? updatedChat
+          : c
+      )
+    );
+
+    setEditingId(null);
+  };
+
+  const deleteChat = async (chatId) => {
+    if (!isLoggedIn) {
+      setChats((prev) => {
+        const filtered = prev.filter((c) => c.id !== chatId);
+        onSelectChat(filtered[0]?.id || null);
+        return filtered;
+      });
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    await axios.delete(`${API_URL}/api/chats/${chatId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setChats((prev) => {
+      const filtered = prev.filter((c) => c._id !== chatId);
+      onSelectChat(filtered[0]?._id || null);
+      return filtered;
+    });
   };
 
   return (
-    <>
-      {isOpen && (
-        <div
-          onClick={onClose}
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
-        />
-      )}
+    <aside className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+      <div className="p-4 border-b border-gray-800">
+        <button
+          onClick={onNewChat}
+          className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-semibold"
+        >
+          + New Chat
+        </button>
+      </div>
 
-      <aside
-        className={`fixed md:static z-50 md:z-auto
-        top-0 left-0 h-full w-64 bg-gray-900 border-r border-gray-800
-        transform transition-transform duration-300
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
-        md:translate-x-0 flex flex-col`}
-      >
-        <div className="p-4 border-b border-gray-800">
-          <button
-            onClick={handleNewChat}
-            className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-semibold"
-          >
-            + New Chat
-          </button>
-        </div>
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
+        {chats.map((chat) => {
+          const id = chat._id || chat.id;
+          const isActive = String(id) === String(activeChatId);
 
-        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
-          {chats.map((chat) => {
-            const id = chat._id || chat.id;
+          return (
+            <div
+              key={id}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg ${
+                isActive ? "bg-gray-800" : "hover:bg-gray-800"
+              }`}
+            >
+              {editingId === id ? (
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") renameChat(id);
+                    if (e.key === "Escape") setEditingId(null);
+                  }}
+                  onBlur={() => renameChat(id)}
+                  className="flex-1 bg-gray-700 px-2 py-1 rounded text-sm outline-none"
+                  autoFocus
+                />
+              ) : (
+                <button
+                  onClick={() => onSelectChat(id)}
+                  className="flex-1 text-left truncate text-sm"
+                >
+                  {chat.title || "New Chat"}
+                </button>
+              )}
 
-            return (
               <button
-                key={id}
-                onClick={() => onSelectChat(id)}
-                className={`w-full text-left px-3 py-2 rounded-lg text-sm truncate ${
-                  String(id) === String(activeChatId)
-                    ? "bg-gray-800 text-white"
-                    : "text-gray-300 hover:bg-gray-800"
-                }`}
+                onClick={() => {
+                  setEditingId(id);
+                  setTitle(chat.title || "");
+                }}
+                className="text-xs text-gray-400 hover:text-white"
               >
-                {chat.title || "New Chat"}
+                ✏️
               </button>
-            );
-          })}
-        </div>
-      </aside>
-    </>
+
+              <button
+                onClick={() => deleteChat(id)}
+                className="text-xs text-red-400 hover:text-red-600"
+              >
+                🗑️
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </aside>
   );
 }

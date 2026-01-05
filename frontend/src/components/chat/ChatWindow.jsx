@@ -101,7 +101,7 @@ export default function ChatWindow({
         )}
       </div>
 
-      {/* INPUT AREA (ALWAYS FIXED) */}
+      {/* INPUT AREA */}
       <div className="p-4 border-t border-gray-800 bg-gray-900">
         <ChatInput onSend={sendMessage} />
       </div>

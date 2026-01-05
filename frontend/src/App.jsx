@@ -94,17 +94,17 @@ export default function App() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        <ChatSidebar
-          chats={chats}
-          activeChatId={activeChatId}
-          onSelectChat={(id) => {
-            setActiveChatId(id);
-            setSidebarOpen(false);
-          }}
-          onNewChat={createNewChat}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
+       <ChatSidebar
+  chats={chats}
+  activeChatId={activeChatId}
+  onSelectChat={(id) => {
+    setActiveChatId(id);
+    setSidebarOpen(false);
+  }}
+  onNewChat={createNewChat}
+  setChats={setChats}
+  isLoggedIn={isLoggedIn}
+/>
 
         <ChatWindow
           isLoggedIn={isLoggedIn}
