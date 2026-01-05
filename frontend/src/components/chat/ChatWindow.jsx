@@ -21,30 +21,30 @@ export default function ChatWindow({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
- const updateChatMessages = (msg) => {
-  if (!activeChat) return;
+  const updateChatMessages = (msg) => {
+    if (!activeChat) return;
 
-  setChats((prev) =>
-    prev.map((chat) => {
-      const chatId = chat._id || chat.id;
-      const activeId = activeChat._id || activeChat.id;
+    setChats((prev) =>
+      prev.map((chat) => {
+        const chatId = chat._id || chat.id;
+        const activeId = activeChat._id || activeChat.id;
 
-      if (chatId !== activeId) return chat;
+        if (chatId !== activeId) return chat;
 
-      const isFirstUserMessage =
-        chat.messages.length === 0 && msg.sender === "user";
+        const isFirstUserMessage =
+          chat.messages.length === 0 && msg.sender === "user";
 
-      return {
-        ...chat,
-        title:
-          isFirstUserMessage && (!chat.title || chat.title === "New Chat")
-            ? msg.text.trim().slice(0, 30)
-            : chat.title,
-        messages: [...chat.messages, msg],
-      };
-    })
-  );
-};
+        return {
+          ...chat,
+          title:
+            isFirstUserMessage && (!chat.title || chat.title === "New Chat")
+              ? msg.text.trim().slice(0, 30)
+              : chat.title,
+          messages: [...chat.messages, msg],
+        };
+      })
+    );
+  };
 
 
   const sendMessage = async (input) => {
@@ -95,9 +95,11 @@ export default function ChatWindow({
     <div className="flex-1 flex flex-col">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !loading ? (
-          <p className="text-center text-gray-400 text-xl">
-            How can I help you?
-          </p>
+          <div className="h-full flex items-center justify-center">
+            <p className="text-3xl md:text-6xl font-semibold text-gray-400 text-center">
+              How can I help you?
+            </p>
+          </div>
         ) : (
           <>
             {messages.map((m, i) => (
