@@ -17,46 +17,61 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
 
+  // ONLY STATE
   const [chats, setChats] = useState([]);
-  const [activeChatId, setActiveChatId] = useState(null);
 
-  // 🔐 Check session once
+  const activeChat = chats[0] || null;
+
+  /* session */
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsLoggedIn(!!token);
+    setIsLoggedIn(!!localStorage.getItem("token"));
   }, []);
 
-  // 📥 Load chats after login
+  /* load chats */
   useEffect(() => {
-    if (!isLoggedIn) return;
+    if (!isLoggedIn) {
+      setChats([
+        {
+          id: crypto.randomUUID(),
+          title: "New Chat",
+          messages: [],
+        },
+      ]);
+      return;
+    }
 
-    const loadChats = async () => {
+    const load = async () => {
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API_URL}/api/chats`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setChats(res.data);
-      setActiveChatId(res.data[0]?._id || null);
+      if (res.data.length === 0) {
+        const create = await axios.post(
+          `${API_URL}/api/chats`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setChats([create.data]);
+      } else {
+        setChats(res.data);
+      }
     };
 
-    loadChats();
+    load();
   }, [isLoggedIn]);
 
-  // 👤 Guest → ensure one chat
-  useEffect(() => {
-    if (!isLoggedIn && chats.length === 0) {
-      const id = crypto.randomUUID();
-      setChats([{ id, title: "New Chat", messages: [] }]);
-      setActiveChatId(id);
-    }
-  }, [isLoggedIn, chats.length]);
-
+  /* create chat */
   const createNewChat = async () => {
     if (!isLoggedIn) {
-      const id = crypto.randomUUID();
-      setChats((p) => [{ id, title: "New Chat", messages: [] }, ...p]);
-      setActiveChatId(id);
+      setChats((prev) => [
+        {
+          id: crypto.randomUUID(),
+          title: "New Chat",
+          messages: [],
+        },
+        ...prev,
+      ]);
       return;
     }
 
@@ -67,15 +82,30 @@ export default function App() {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    setChats((p) => [res.data, ...p]);
-    setActiveChatId(res.data._id);
+    setChats((prev) => [res.data, ...prev]);
   };
 
+  /* select chat */
+  const selectChat = (id) => {
+    setChats((prev) => {
+      const idx = prev.findIndex(
+        (c) => String(c._id || c.id) === String(id)
+      );
+      if (idx === -1) return prev;
+
+      const selected = prev[idx];
+      const rest = prev.filter((_, i) => i !== idx);
+      return [selected, ...rest];
+    });
+
+    setSidebarOpen(false);
+  };
+
+  /* logout */
   const logout = () => {
     localStorage.removeItem("token");
     setIsLoggedIn(false);
     setChats([]);
-    setActiveChatId(null);
   };
 
   return (
@@ -91,11 +121,7 @@ export default function App() {
       <div className="flex flex-1 overflow-hidden">
         <ChatSidebar
           chats={chats}
-          activeChatId={activeChatId}
-          onSelectChat={(id) => {
-            setActiveChatId(id);
-            setSidebarOpen(false);
-          }}
+          onSelectChat={selectChat}
           onNewChat={createNewChat}
           setChats={setChats}
           isLoggedIn={isLoggedIn}
@@ -107,22 +133,22 @@ export default function App() {
           isLoggedIn={isLoggedIn}
           chats={chats}
           setChats={setChats}
-          activeChatId={activeChatId}
+          activeChat={activeChat}
         />
       </div>
 
       <Footer />
 
-    {showLogin && (
-  <Modal onClose={() => setShowLogin(false)}>
-    <Login
-      onSuccess={() => {
-        setIsLoggedIn(true);
-        setShowLogin(false);
-      }}
-    />
-  </Modal>
-)}
+      {showLogin && (
+        <Modal onClose={() => setShowLogin(false)}>
+          <Login
+            onSuccess={() => {
+              setIsLoggedIn(true);
+              setShowLogin(false);
+            }}
+          />
+        </Modal>
+      )}
 
       {showSignup && (
         <Modal onClose={() => setShowSignup(false)}>

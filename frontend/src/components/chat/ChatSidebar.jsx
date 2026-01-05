@@ -6,7 +6,6 @@ const API_URL =
 
 export default function ChatSidebar({
   chats,
-  activeChatId,
   onSelectChat,
   onNewChat,
   setChats,
@@ -17,19 +16,14 @@ export default function ChatSidebar({
   const [editingId, setEditingId] = useState(null);
   const [title, setTitle] = useState("");
 
-  const renameChat = async (chatId) => {
+  const renameChat = async (id) => {
     const newTitle = title.trim();
-    if (!newTitle) {
-      setEditingId(null);
-      return;
-    }
+    if (!newTitle) return setEditingId(null);
 
     if (!isLoggedIn) {
       setChats((prev) =>
         prev.map((c) =>
-          String(c.id) === String(chatId)
-            ? { ...c, title: newTitle }
-            : c
+          String(c.id) === String(id) ? { ...c, title: newTitle } : c
         )
       );
       setEditingId(null);
@@ -37,9 +31,8 @@ export default function ChatSidebar({
     }
 
     const token = localStorage.getItem("token");
-
     const res = await axios.patch(
-      `${API_URL}/api/chats/${chatId}`,
+      `${API_URL}/api/chats/${id}`,
       { title: newTitle },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -53,32 +46,22 @@ export default function ChatSidebar({
     setEditingId(null);
   };
 
-  const deleteChat = async (chatId) => {
+  const deleteChat = async (id) => {
     if (!isLoggedIn) {
-      setChats((prev) => {
-        const filtered = prev.filter((c) => c.id !== chatId);
-        onSelectChat(filtered[0]?.id || null);
-        return filtered;
-      });
+      setChats((prev) => prev.filter((c) => c.id !== id));
       return;
     }
 
     const token = localStorage.getItem("token");
-
-    await axios.delete(`${API_URL}/api/chats/${chatId}`, {
+    await axios.delete(`${API_URL}/api/chats/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    setChats((prev) => {
-      const filtered = prev.filter((c) => c._id !== chatId);
-      onSelectChat(filtered[0]?._id || null);
-      return filtered;
-    });
+    setChats((prev) => prev.filter((c) => c._id !== id));
   };
 
   return (
     <>
-      {/* Overlay (mobile only) */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -86,39 +69,28 @@ export default function ChatSidebar({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`
           fixed md:static z-50
-          top-0 left-0 h-full
-          w-64 bg-gray-900 border-r border-gray-800
-          transform transition-transform duration-300
+          top-0 left-0 h-full w-64
+          bg-gray-900 border-r border-gray-800
           ${isOpen ? "translate-x-0" : "-translate-x-full"}
-          md:translate-x-0
-          flex flex-col
+          md:translate-x-0 transition-transform
         `}
       >
-        <div className="p-4 border-b border-gray-800 flex justify-between items-center">
+        <div className="p-4 border-b border-gray-800">
           <button
             onClick={onNewChat}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-sm font-semibold"
+            className="w-full bg-blue-600 py-2 rounded-lg font-semibold"
           >
             + New Chat
           </button>
-
-          {/* Close button (mobile only) */}
-          <button
-            onClick={onClose}
-            className="ml-2 text-gray-400 hover:text-white md:hidden"
-          >
-            ✕
-          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
-          {chats.map((chat) => {
+        <div className="p-2 space-y-1 overflow-y-auto">
+          {chats.map((chat, idx) => {
             const id = chat._id || chat.id;
-            const isActive = String(id) === String(activeChatId);
+            const isActive = idx === 0;
 
             return (
               <div
@@ -131,18 +103,14 @@ export default function ChatSidebar({
                   <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") renameChat(id);
-                      if (e.key === "Escape") setEditingId(null);
-                    }}
                     onBlur={() => renameChat(id)}
-                    className="flex-1 bg-gray-700 px-2 py-1 rounded text-sm outline-none"
                     autoFocus
+                    className="flex-1 bg-gray-700 px-2 py-1 rounded"
                   />
                 ) : (
                   <button
                     onClick={() => onSelectChat(id)}
-                    className="flex-1 text-left truncate text-sm"
+                    className="flex-1 text-left truncate"
                   >
                     {chat.title || "New Chat"}
                   </button>
@@ -153,17 +121,11 @@ export default function ChatSidebar({
                     setEditingId(id);
                     setTitle(chat.title || "");
                   }}
-                  className="text-xs text-gray-400 hover:text-white"
                 >
                   ✏️
                 </button>
 
-                <button
-                  onClick={() => deleteChat(id)}
-                  className="text-xs text-red-400 hover:text-red-600"
-                >
-                  🗑️
-                </button>
+                <button onClick={() => deleteChat(id)}>🗑️</button>
               </div>
             );
           })}

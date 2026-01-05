@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import MessageBubble from "./MessageBubble";
 import ChatInput from "./ChatInput";
@@ -10,153 +10,106 @@ export default function ChatWindow({
   isLoggedIn,
   chats,
   setChats,
-  activeChatId,
+  activeChat,
 }) {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const activeChat = useMemo(
-    () =>
-      chats.find(
-        (c) => String(c._id || c.id) === String(activeChatId)
-      ),
-    [chats, activeChatId]
-  );
-
-  const messages = activeChat?.messages ?? [];
+  const messages = activeChat?.messages || [];
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loading]);
 
-  const updateChatMessages = (newMessage) => {
-    setChats((prev) =>
-      prev.map((chat) =>
-        String(chat._id || chat.id) === String(activeChatId)
-          ? {
-              ...chat,
-              title:
-                chat.messages.length === 0 && newMessage.sender === "user"
-                  ? newMessage.text.slice(0, 30)
-                  : chat.title,
-              messages: [...chat.messages, newMessage],
-            }
-          : chat
-      )
-    );
-  };
+ const updateChatMessages = (msg) => {
+  if (!activeChat) return;
 
-const sendMessage = async (input) => {
-  if (!input.trim() || !activeChatId) return;
+  setChats((prev) =>
+    prev.map((chat) => {
+      const chatId = chat._id || chat.id;
+      const activeId = activeChat._id || activeChat.id;
 
-  const wasEmpty = messages.length === 0;
+      if (chatId !== activeId) return chat;
 
-  updateChatMessages({ sender: "user", text: input });
-  setLoading(true);
+      const isFirstUserMessage =
+        chat.messages.length === 0 && msg.sender === "user";
 
-  let botReply = "";
+      return {
+        ...chat,
+        title:
+          isFirstUserMessage && (!chat.title || chat.title === "New Chat")
+            ? msg.text.trim().slice(0, 30)
+            : chat.title,
+        messages: [...chat.messages, msg],
+      };
+    })
+  );
+};
 
-  try {
-    const history = messages.map((m) => ({
-      role: m.sender === "user" ? "user" : "assistant",
-      content: m.text,
-    }));
 
-    const res = await axios.post(`${API_URL}/chat`, {
-      message: input,
-      history,
-    });
+  const sendMessage = async (input) => {
+    if (!input.trim() || !activeChat) return;
 
-    botReply = res.data.reply;
-    updateChatMessages({ sender: "bot", text: botReply });
-  } catch {
-    updateChatMessages({
-      sender: "bot",
-      text: "⚠️ AI service failed. Try again.",
-    });
-    setLoading(false);
-    return;
-  }
+    updateChatMessages({ sender: "user", text: input });
+    setLoading(true);
 
-  setLoading(false);
-
-  // 🔐 Save to DB (logged-in only)
-  if (isLoggedIn && activeChat?._id) {
+    let reply = "";
     try {
-      const token = localStorage.getItem("token");
+      const history = messages.map((m) => ({
+        role: m.sender === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
 
+      const res = await axios.post(`${API_URL}/chat`, {
+        message: input,
+        history,
+      });
+
+      reply = res.data.reply;
+      updateChatMessages({ sender: "bot", text: reply });
+    } catch {
+      updateChatMessages({
+        sender: "bot",
+        text: "⚠️ AI service failed.",
+      });
+    }
+
+    setLoading(false);
+
+    if (isLoggedIn && activeChat._id) {
+      const token = localStorage.getItem("token");
       await axios.post(
         `${API_URL}/api/chats/${activeChat._id}/message`,
         { sender: "user", text: input },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       await axios.post(
         `${API_URL}/api/chats/${activeChat._id}/message`,
-        { sender: "bot", text: botReply },
+        { sender: "bot", text: reply },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-    } catch {
-      // silent fail (UI already updated)
     }
-  }
-
-  // 🆕 Auto-create next chat ONLY AFTER first message-response
-  if (wasEmpty) {
-    if (isLoggedIn) {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        `${API_URL}/api/chats`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setChats((prev) => [res.data, ...prev]);
-      setActiveChatId(res.data._id);
-    } else {
-      const id = crypto.randomUUID();
-      setChats((prev) => [
-        { id, title: "New Chat", messages: [] },
-        ...prev,
-      ]);
-      setActiveChatId(id);
-    }
-  }
-};
-
-
+  };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* CONTENT AREA */}
+    <div className="flex-1 flex flex-col">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && !loading ? (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-3xl md:text-4xl font-semibold text-gray-400 text-center">
-              How can I help you?
-            </p>
-          </div>
+          <p className="text-center text-gray-400 text-xl">
+            How can I help you?
+          </p>
         ) : (
           <>
-            {messages.map((msg, idx) => (
-              <MessageBubble key={idx} msg={msg} />
+            {messages.map((m, i) => (
+              <MessageBubble key={i} msg={m} />
             ))}
-
-            {loading && (
-              <div className="bg-gray-700 p-3 rounded-xl w-fit mr-auto animate-pulse">
-                Fusion is thinking...
-              </div>
-            )}
-
+            {loading && <p className="animate-pulse">Fusion is thinking…</p>}
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
 
-      {/* INPUT AREA */}
-      <div className="p-4 border-t border-gray-800 bg-gray-900">
-        <ChatInput onSend={sendMessage} />
-      </div>
+      <ChatInput onSend={sendMessage} />
     </div>
   );
 }
