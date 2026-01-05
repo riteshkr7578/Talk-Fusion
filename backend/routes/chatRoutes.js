@@ -43,4 +43,29 @@ router.post("/:chatId/message", authMiddleware, async (req, res) => {
   res.json(chat);
 });
 
+// Rename chat
+router.patch("/:chatId", authMiddleware, async (req, res) => {
+  const { title } = req.body;
+
+  const chat = await Chat.findOneAndUpdate(
+    { _id: req.params.chatId, userId: req.userId },
+    { title },
+    { new: true }
+  );
+
+  res.json(chat);
+});
+
+
+// Delete chat
+router.delete("/:chatId", authMiddleware, async (req, res) => {
+  await Chat.findOneAndDelete({
+    _id: req.params.chatId,
+    userId: req.userId,
+  });
+
+  res.json({ success: true });
+});
+
+
 export default router;
