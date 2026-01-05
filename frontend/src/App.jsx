@@ -9,7 +9,6 @@ import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import Footer from "./components/layout/Footer";
 
-
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 export default function App() {
@@ -21,13 +20,28 @@ export default function App() {
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
 
+  // Check auth once on load
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem("token"));
   }, []);
 
-  const handleLoginSuccess = () => {
+  // Load chats ONLY after successful login
+  const handleLoginSuccess = async () => {
     setIsLoggedIn(true);
     setShowLogin(false);
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get(`${API_URL}/api/chats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setChats(res.data);
+      setActiveChatId(res.data[0]?._id || null);
+    } catch {
+      setChats([]);
+      setActiveChatId(null);
+    }
   };
 
   const handleLogout = () => {
@@ -42,23 +56,8 @@ export default function App() {
       const id = crypto.randomUUID();
       setChats((prev) => [{ id, title: "New Chat", messages: [] }, ...prev]);
       setActiveChatId(id);
-      return id;
+      return;
     }
-
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (!token) return;
-
-  axios
-    .get(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    .then(() => setIsLoggedIn(true))
-    .catch(() => {
-      localStorage.removeItem("token");
-      setIsLoggedIn(false);
-    });
-}, []);
 
     const token = localStorage.getItem("token");
     const res = await axios.post(
@@ -69,30 +68,16 @@ useEffect(() => {
 
     setChats((prev) => [res.data, ...prev]);
     setActiveChatId(res.data._id);
-    return res.data._id;
   };
 
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const loadChats = async () => {
-      const token = localStorage.getItem("token");
-      const res = await axios.get(`${API_URL}/api/chats`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setChats(res.data);
-      setActiveChatId(res.data[0]?._id || null);
-    };
-
-    loadChats();
-  }, [isLoggedIn]);
-
+  // Guest: ensure one chat exists
   useEffect(() => {
     if (!isLoggedIn && chats.length === 0) {
-      createNewChat();
+      const id = crypto.randomUUID();
+      setChats([{ id, title: "New Chat", messages: [] }]);
+      setActiveChatId(id);
     }
-  }, [isLoggedIn, chats.length]);
+  }, [isLoggedIn]);
 
   return (
     <div className="w-full h-screen bg-gray-900 text-white flex flex-col">
@@ -111,20 +96,19 @@ useEffect(() => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-       <ChatSidebar
-  chats={chats}
-  activeChatId={activeChatId}
-  onSelectChat={(id) => {
-    setActiveChatId(id);
-    setSidebarOpen(false);
-  }}
-  onNewChat={createNewChat}
-  setChats={setChats}
-  isLoggedIn={isLoggedIn}
-  isOpen={sidebarOpen}
-  onClose={() => setSidebarOpen(false)}
-/>
-
+        <ChatSidebar
+          chats={chats}
+          activeChatId={activeChatId}
+          onSelectChat={(id) => {
+            setActiveChatId(id);
+            setSidebarOpen(false);
+          }}
+          onNewChat={createNewChat}
+          setChats={setChats}
+          isLoggedIn={isLoggedIn}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
 
         <ChatWindow
           isLoggedIn={isLoggedIn}
@@ -134,7 +118,8 @@ useEffect(() => {
         />
       </div>
 
-<Footer />
+      <Footer />
+
       {showLogin && (
         <Modal onClose={() => setShowLogin(false)}>
           <Login onSuccess={handleLoginSuccess} />
